@@ -5,8 +5,7 @@ set -e
 # Used to format the output based on heroku guidelines
 # https://devcenter.heroku.com/articles/buildpack-api#style
 indent() {
-  RE="s/^/       /"
-  sed "${SED_FLAG}" "${RE}"
+  sed -u 's/^/       /'
 }
 
 BUILD_DIR=${1}

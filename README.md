@@ -1,3 +1,12 @@
+Disclaimer:
+===
+
+This is a fork from: [roperzh/heroku-buildpack-hugo](https://github.com/roperzh/heroku-buildpack-hugo)
+
+I had to make this in order to work with static-buildpack and Environment Variables for Theme submodules
+
+I saw that the project has some old pull requests that were never merged and i needed theses features.
+
 Heroku buildpack: Hugo
 ===
 
@@ -11,19 +20,19 @@ Usage
 Create a Heroku application using this buildpack:
 
 ```bash
-$ heroku create --buildpack https://github.com/roperzh/heroku-buildpack-hugo.git
+$ heroku create --buildpack https://github.com/dalssaso/heroku-buildpack-hugo.git
 ```
 
 or configure your existent application:
 
 ```bash
-$ heroku buildpacks:set BUILDPACK_URL="https://github.com/roperzh/heroku-buildpack-hugo.git"
+$ heroku buildpacks:set https://github.com/dalssaso/heroku-buildpack-hugo.git
 ```
 
 Optionally, define a `HUGO_VERSION` Config Var to specify the Hugo version you wish to use:
 
 ```bash
-$ heroku config:set HUGO_VERSION=0.25
+$ heroku config:set HUGO_VERSION=0.40.3
 ```
 
 Then simply git push to heroku and open your application!
@@ -36,26 +45,28 @@ $ heroku open
 Using themes
 ===
 
-This buildpack provides a simple api to use custom themes, just add a `.hugotheme`
-file in the root of your application with the url of your theme.
+This buildpack provides a simple api to use custom themes with 2 ways to add it:
 
-***Example***
+1. [.hugotheme file](#hugotheme-file)
+2. [HUGO_THEME_URL Environment Variable](#hugo_theme_url-environment-variable)
 
-To fetch the great [hyde](https://github.com/spf13/hyde.git) theme:
+
+
+## `.hugotheme` file
+The first option is to use .hugotheme file inside of the root folder of your blog with the theme that you want to use
+
+```bash
+echo "https://github.com/salcan/BeyondNothing" > .hugotheme
 
 ```
-https://github.com/spf13/hyde.git
+
+## `HUGO_THEME_URL` Environment variable
+If you need to set a private git submodule you can use the [Heroku's Config Variables](https://devcenter.heroku.com/articles/config-vars)
+
+```bash
+HUGO_THEME_URL=https://${USER}:${PASSWORD}@github.com/salcan/BeyondNothing
+
 ```
-
-[Here](http://immense-hollows-6319.herokuapp.com/) is an example application,
-and [here](https://github.com/roperzh/example-heroku-buildpack-hugo) is the code.
-
-Alternative method
----
-
-If you don't like the idea of a `.hugotheme` file, you can simply manage your
-themes with [git submodules](http://git-scm.com/book/en/Git-Tools-Submodules).
-Heroku will take care to fetch all the submodules in your project.
 
 Important notes
 ===

@@ -5,23 +5,30 @@ set -e
 # Used to format the output based on heroku guidelines
 # https://devcenter.heroku.com/articles/buildpack-api#style
 indent() {
-  RE="s/^/       /"
-  sed $SED_FLAG "$RE"
+  sed -u 's/^/       /'
 }
 
-BUILD_DIR=$1
-CACHE_DIR=$2
-ENV_DIR=$3
+BUILD_DIR=${1}
+CACHE_DIR=${2}
+ENV_DIR=${3}
 
 # Default Hugo version
-DEFAULT_HUGO_VERSION="0.26"
+DEFAULT_HUGO_VERSION="0.40.3"
 
 # attempt to extract the HUGO_VERSION parameter form the Heroku configuration vars, fall back to the default version if unavailable
-if [ -d "$ENV_DIR" -a -e "$ENV_DIR/HUGO_VERSION" ]; then
-  export HUGO_VERSION=$(cat "$ENV_DIR/HUGO_VERSION")
+if [ -d "${ENV_DIR}" ] && [ -e "${ENV_DIR}/HUGO_VERSION" ]; then
+  HUGO_VERSION=$(cat "${ENV_DIR}/HUGO_VERSION")
+  export HUGO_VERSION
 else
-  echo "\n-----> HUGO VERSION not defined, using $DEFAULT_HUGO_VERSION."
-  export HUGO_VERSION=$DEFAULT_HUGO_VERSION
+  printf "\\n-----> HUGO VERSION not defined, using %s" "${DEFAULT_HUGO_VERSION}"
+  export HUGO_VERSION=${DEFAULT_HUGO_VERSION}
+fi
+
+if [ -d "${ENV_DIR}" ] && [ -e "${ENV_DIR}/HUGO_THEME_URL" ]; then
+  HUGO_THEME_URL=$(cat "${ENV_DIR}/HUGO_THEME_URL")
+  export HUGO_THEME_URL
+else
+  printf "\\n-----> HUGO_THEME_URL not defined, ignoring"
 fi
 
 # Hugo URL ( download from GH builds )
@@ -30,28 +37,40 @@ FILE_NAME=${RELEASE_NAME}.tar.gz
 HUGO_PACKAGE=https://github.com/spf13/hugo/releases/download/v${HUGO_VERSION}/${FILE_NAME}
 
 # Store the hugo package in the cache_dir ( persistent across builds )
-mkdir -p $CACHE_DIR
-if ! [ -e $CACHE_DIR/$FILE_NAME ]; then
-  echo "\n-----> Fetching Hugo ${HUGO_VERSION} binaries at ${HUGO_PACKAGE}"
-  curl $HUGO_PACKAGE -L -s -o $CACHE_DIR/$FILE_NAME | indent
+mkdir -p "${CACHE_DIR}"
+if ! [ -e "${CACHE_DIR}"/"${FILE_NAME}" ]; then
+  printf "\\n-----> Fetching Hugo %s binaries at %s" "${HUGO_VERSION}" "${HUGO_PACKAGE}"
+  curl "${HUGO_PACKAGE}" -L -s -o "${CACHE_DIR}"/"${FILE_NAME}" | indent
 fi
 
 # Extract the binary in the working directory
-echo "\n-----> Extracting Hugo ${HUGO_VERSION} binaries to ${BUILD_DIR}"
-mkdir -p $CACHE_DIR/$RELEASE_NAME | indent
-tar -zxvf $CACHE_DIR/$FILE_NAME -C $CACHE_DIR | indent
-mv $CACHE_DIR/hugo $BUILD_DIR/hugo | indent
+printf "\\n-----> Extracting Hugo %s  binaries to %s" ${HUGO_VERSION} "${BUILD_DIR}"
+mkdir -p "${CACHE_DIR}"/"${RELEASE_NAME}" | indent
+tar -zxvf "${CACHE_DIR}"/"${FILE_NAME}" -C "${CACHE_DIR}" | indent
+mv "${CACHE_DIR}/hugo" "${BUILD_DIR}/hugo" | indent
 
 # Fetch a theme specified in the .hugotheme file
-if [ -e $BUILD_DIR/.hugotheme ]; then
-  echo "\n-----> Getting the theme"
-  THEME_URL="`cat $BUILD_DIR/.hugotheme`"
-  rm -rf $BUILD_DIR/themes && mkdir $BUILD_DIR/themes && cd $BUILD_DIR/themes
-  git clone $THEME_URL
+if [ -e "${BUILD_DIR}/.hugotheme" ] && [ -z "${HUGO_THEME_URL}" ]; then
+  printf "\\n-----> Getting the theme using .hugotheme"
+  THEME_URL="$(cat "${BUILD_DIR}"/.hugotheme)"
+  rm -rf "${BUILD_DIR}/themes" && mkdir "${BUILD_DIR}/themes" && cd "${BUILD_DIR}/themes"
+  git clone "${THEME_URL}"
+elif [ -n "${HUGO_THEME_URL}" ] && [ ! -e "${BUILD_DIR}/.hugotheme" ]; then
+  printf "\\n-----> Getting the theme using environment variable"
+  THEME_URL="${HUGO_THEME_URL}"
+  rm -rf "${BUILD_DIR}/themes" && mkdir "${BUILD_DIR}/themes" && cd "${BUILD_DIR}/themes"
+  git clone "${THEME_URL}"
+elif [ -n "${HUGO_THEME_URL}" ] && [ -e "${BUILD_DIR}/.hugotheme" ]; then
+  printf "\\n-----> Both .hugotheme and HUGO_THEME_URL are set, using HUGO_THEME_URL"
+  THEME_URL="${HUGO_THEME_URL}"
+  rm -rf "${BUILD_DIR}/themes" && mkdir "${BUILD_DIR}/themes" && cd "${BUILD_DIR}/themes"
+  git clone "${THEME_URL}"
+else
+  printf "\\n-----> No theme set, moving on"
 fi
 
 # Build the site
-echo "\n-----> Building the site"
-cd $BUILD_DIR
+printf "\\n-----> Building the site"
+cd "${BUILD_DIR}"
 mkdir -p static | indent
 ./hugo | indent

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir> <env-dir>
 set -e
 
@@ -72,5 +72,12 @@ fi
 # Build the site
 printf "\\n-----> Building the site"
 cd "${BUILD_DIR}"
-mkdir -p static | indent
+echo "publishDir = \"public_html\"" >> config.toml
 ./hugo | indent
+
+# Run static buildpack
+printf "\\n-----> Running static buildpack compile"
+BP_DIR="$(cd "$(dirname "${0}")"; cd .. || exit; pwd)"
+cd "${BP_DIR}"
+git submodule update --init --recursive | indent
+heroku-buildpack-static/bin/compile "${BUILD_DIR}" "${CACHE_DIR}" "${ENV_DIR}"

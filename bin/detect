@@ -1,11 +1,9 @@
 #!/bin/sh
 
-BUILD_DIR=$1
+CONFIG_FILE="$(echo config.*)"
 
-CONFIG_FILE="`ls $BUILD_DIR | grep config`"
-
-if [ -z $CONFIG_FILE ]; then
-  echo "\n-----> Hugo expects to find a config file in the root of the source directory! please include a config.toml, config.yaml or config.json file"
+if [ -z "${CONFIG_FILE}" ]; then
+  printf "\\n-----> Hugo expects to find a config file in the root of the source directory! please include a config.toml, config.yaml or config.json file"
   exit 1
 fi
 

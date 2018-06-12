@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # bin/release <build-dir>
 
+rm -f ./hugo
 cd "$(dirname "${0}")" || exit
 cd .. || exit
 git submodule update --init --recursive

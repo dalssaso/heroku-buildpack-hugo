@@ -3,6 +3,5 @@
 
 cd "$(dirname "${0}")" || exit
 cd .. || exit
-git submodule init
-git submodule update
+git submodule update --init --recursive
 heroku-buildpack-static/bin/release "${1}"

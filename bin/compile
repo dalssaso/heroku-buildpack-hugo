@@ -79,6 +79,5 @@ echo "publishDir = \"public_html\"" >> config.toml
 printf "\\n-----> Running static buildpack compile"
 BP_DIR="$(cd "$(dirname "${0}")"; cd .. || exit; pwd)"
 cd "${BP_DIR}"
-git submodule init | indent
-git submodule update | indent
+git submodule update --init --recursive | indent
 heroku-buildpack-static/bin/compile "${BUILD_DIR}" "${CACHE_DIR}" "${ENV_DIR}"

@@ -72,7 +72,6 @@ fi
 # Build the site
 printf "\\n-----> Building the site"
 cd "${BUILD_DIR}"
-echo "publishDir = \"public_html\"" >> config.toml
 ./hugo | indent
 
 # Run static buildpack
